@@ -4,7 +4,98 @@ Build a production-grade Enterprise RAG system for Kubernetes IT operations usin
 
 ## 🚀 Features & Architecture
 
-![Enterprise Advanced RAG Architecture](others/PROJECT_REPORT.md) *(Note: Please refer to the included architectural diagrams in the repository for visual flow)*
+```mermaid
+graph TB
+    User((SRE / User<br/>HTTPS + JWT Bearer)) --> FastAPI[FastAPI Service<br/>REST • OpenAPI • Streamlit UI]
+
+    subgraph InputSecurity [Input Security Pipeline - 9-Layer Defense]
+        direction LR
+        L1[L1: Pydantic + Regex] --> L4a[L4a: JWT Auth]
+        L4a --> L4b[L4b: Rate Limit]
+        L4b --> L6[L6: Token Budget]
+        L6 --> L5[L5: Input Restructure]
+        L5 --> L2[L2: llm-guard Scan]
+        L2 --> L7a[L7a: Content Moderation]
+    end
+
+    FastAPI --> InputSecurity
+
+    subgraph LangGraph [LangGraph State Machine]
+        direction TB
+        Router{Intent Router<br/>rag • sql • hybrid}
+
+        subgraph RAG [RAG Pipeline]
+            direction TB
+            HyDE[HyDE<br/>3 hypothetical answers]
+            Embed[Embed Query<br/>text-embedding-3-small]
+            HybridRet[Hybrid Retrieval<br/>Dense + Sparse BM25]
+            RRF[RRF<br/>Reciprocal Rank Fusion]
+            Rerank[Cross-Encoder Rerank]
+            CRAG{CRAG Grader}
+            Spotlight[Spotlighting L8<br/>XML-delimited chunks]
+
+            HyDE --> Embed --> HybridRet --> RRF --> Rerank --> CRAG
+            CRAG -- rel >= 0.7 --> Spotlight
+        end
+
+        Tavily[Tavily<br/>Web Search Fallback]
+        CRAG -- rel < 0.7 --> Tavily
+        Tavily --> Spotlight
+
+        subgraph Text2SQL [Text2SQL Pipeline]
+            direction TB
+            GenSQL[Generate SQL<br/>GPT-4o]
+            ValSQL[Validate SQL<br/>SELECT-only]
+            HITL{{interrupt<br/>HITL pending approval}}
+            ExecSQL[Execute SQL<br/>Postgres SELECT]
+            FmtRes[Format Results]
+
+            GenSQL --> ValSQL --> HITL --> ExecSQL --> FmtRes
+        end
+
+        HITL -.-> |User reviews SQL| User
+
+        Router -- rag / hybrid --> HyDE
+        Router -- sql / hybrid --> GenSQL
+
+        LLM[LLM Answer Generation<br/>GPT-4o grounded]
+        SelfRAG{Self-RAG Reflect}
+
+        Spotlight --> LLM
+        FmtRes --> LLM
+        
+        LLM --> SelfRAG
+        SelfRAG -- score < 0.8 --> LLM
+        
+        Finalize[Finalize • attach metadata]
+        SelfRAG -- score >= 0.8 --> Finalize
+    end
+
+    L7a -- sanitized payload --> Router
+
+    subgraph OutputSecurity [Output Security Pipeline]
+        direction LR
+        L7b[L7b: Output Moderation + PII] --> L9[L9: Pydantic Schema Validation]
+    end
+
+    Finalize --> OutputSecurity
+    OutputSecurity -.-> |ChatResponse| User
+
+    subgraph Cache [5-Tier Redis Cache Upstash]
+        direction LR
+        C1[Embedding 7d] ~~~ C2[Intent 24h] ~~~ C3[SQL Gen 24h] ~~~ C4[SQL Result 15m] ~~~ C5[RAG Answer 1h]
+    end
+
+    subgraph DataStores [Persistent Data Stores & External Services]
+        direction LR
+        Qdrant[(Qdrant<br/>Dense+Sparse)]
+        PG[(PostgreSQL 16<br/>Ops DB)]
+        Redis[(Upstash Redis<br/>Cache)]
+        S3[(S3 / Local FS<br/>Raw corpus)]
+        OAI((OpenAI API<br/>GPT-4o))
+        TavAPI((Tavily API))
+    end
+```
 
 The system is built on a robust, state-of-the-art AI stack:
 
