@@ -11,6 +11,7 @@ from __future__ import annotations
 import psycopg2
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
+from loguru import logger
 
 from app.config import settings
 from app.middleware.auth import create_access_token, hash_password, verify_password
@@ -105,6 +106,7 @@ async def register(request: Request, body: RegisterRequest) -> TokenResponse:
         conn.close()
 
     token = create_access_token(body.username)
+    logger.info("New user registered: {} from IP {}", body.username, client_ip)
     return TokenResponse(token=token, username=body.username)
 
 
@@ -136,10 +138,12 @@ async def login(request: Request, body: LoginRequest) -> TokenResponse:
     conn.close()
 
     if row is None or not verify_password(body.password, row[0]):
+        logger.warning("Failed login attempt for username: {} from IP {}", body.username, client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
 
     is_admin: bool = bool(row[1])
     token = create_access_token(body.username, is_admin=is_admin)
+    logger.info("User {} logged in successfully from IP {}", body.username, client_ip)
     return TokenResponse(token=token, username=body.username, is_admin=is_admin)

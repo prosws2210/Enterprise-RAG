@@ -55,7 +55,7 @@ def _get_moderation_scanners() -> list[Any]:
     return _moderation_scanners
 
 def redact_pii(text: str) -> str:
-    if _SCAN_OUTPUT is not None:
+    if _SCAN_OUTPUT is not None and settings.enable_security_scanners:
         try:
             scanners = _get_pii_scanners()
             sanitized, _, _ = _SCAN_OUTPUT(scanners, "", text)
@@ -72,7 +72,7 @@ def moderate_output(text: str) -> tuple[bool, str | None]:
 
     If blocked, reason explains why. If allowed, text is redacted in-place.
     """
-    if _SCAN_OUTPUT is not None:
+    if _SCAN_OUTPUT is not None and settings.enable_security_scanners:
         try:
             scanners = _get_moderation_scanners()
             _, is_valid, _ = _SCAN_OUTPUT(scanners, "", text)

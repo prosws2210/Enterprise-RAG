@@ -126,7 +126,7 @@ async def upload_document(
     ]
 
     try:
-        embeddings = get_embeddings([c.text for c in chunks])
+        embeddings = embed_texts([c.text for c in chunks])
         ensure_collection()
         upsert_chunks(chunks, embeddings)
     except Exception as exc:

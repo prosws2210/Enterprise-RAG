@@ -100,7 +100,7 @@ def crag_pipeline(
             return (web_chunks, evaluation, True)
         except ValueError:
             logger.warning("Web search triggered but Tavily API key not configured")
-            return ([], evaluation, False)
+            return (chunks, evaluation, False)
 
     evaluation = grade_chunks(question, chunks)
 
@@ -110,6 +110,6 @@ def crag_pipeline(
             return (web_chunks, evaluation, True)
         except ValueError:
             logger.warning("Web search triggered but Tavily API key not configured")
-            return ([], evaluation, False)
+            return (chunks, evaluation, False)
 
     return (chunks, evaluation, False)

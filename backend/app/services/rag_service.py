@@ -85,7 +85,15 @@ def _generate(
     chunks: list[RetrievedChunk],
     flags: dict | None = None,
 ) -> ChatResponse:
-    enable_self_reflective = bool(_flag(flags, "enable_self_reflective", False))
+    """Generate an answer using the retrieved context."""
+    if not chunks:
+        logger.warning("No chunks available for generation, returning fast fail")
+        return ChatResponse(
+            answer="I do not have enough context from the documents to answer your question.",
+            sources=[],
+            confidence=0.0,
+            metadata=ResponseMetadata(route="rag", cache_hit=False)
+        )
 
     spotlighted = build_spotlighted_context(chunks)
     system = build_system_prompt()

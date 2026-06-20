@@ -12,8 +12,10 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from langgraph.types import Command
 from pydantic import BaseModel
+from loguru import logger
 
 from app.config import settings
 from app.exceptions import BudgetExceededError, ContentBlockedError, InjectionBlockedError, RateLimitError
@@ -114,7 +116,8 @@ async def query(
     Returns a `ChatResponse`. If a SQL query requires human approval the
     `pending_sql` field will be populated instead of `answer`.
     """
-    sanitised = _run_security_checks(body.question, user.username)
+    logger.info("Received query from user {}: {}", user.username, body.question)
+    sanitised = await run_in_threadpool(_run_security_checks, body.question, user.username)
 
     flags = {
         "top_k": body.top_k,
@@ -127,9 +130,10 @@ async def query(
     thread_id = str(uuid.uuid4())
     config = {"configurable": {"thread_id": thread_id}}
 
-    result = graph.invoke(
+    result = await run_in_threadpool(
+        graph.invoke,
         {"question": sanitised, "user_id": user.username, "flags": flags},
-        config=config,
+        config,
     )
 
     # SQL approval required — surface the pending block
@@ -182,8 +186,9 @@ async def execute_sql(
     Set `approved: true` to execute, `approved: false` to cancel.
     """
     config = {"configurable": {"thread_id": body.query_id}}
-    result = graph.invoke(
+    result = await run_in_threadpool(
+        graph.invoke,
         Command(resume={"approved": body.approved}),
-        config=config,
+        config,
     )
     return _build_response(result)

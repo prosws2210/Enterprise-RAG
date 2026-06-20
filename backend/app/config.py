@@ -50,11 +50,11 @@ class Settings(BaseSettings):
     jwt_secret: str = ""
     jwt_expiration_minutes: int = 60
 
-    rate_limit_requests: int = 20
+    rate_limit_requests: int = 200
     rate_limit_window_seconds: int = 60
     max_tokens_per_user_daily: int = 100_000
-    auth_login_rate_limit_per_min: int = 5
-    auth_register_rate_limit_per_hour: int = 3
+    auth_login_rate_limit_per_min: int = 50
+    auth_register_rate_limit_per_hour: int = 30
 
     max_input_tokens: int = 3_000
     reserved_context_tokens: int = 1_000

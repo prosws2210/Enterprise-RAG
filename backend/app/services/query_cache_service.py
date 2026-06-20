@@ -25,8 +25,10 @@ class QueryCacheService:
         self._lock = threading.RLock()
 
     def _build_redis_client(self) -> Any | None:
-        if not settings.upstash_redis_url or not settings.upstash_redis_token:
-            logger.info("Redis cache disabled; missing Upstash config")
+        url = settings.upstash_redis_url
+        token = settings.upstash_redis_token
+        if not url or not token or "your-redis" in url or token == "your-upstash-redis-token":
+            logger.info("Redis cache disabled; missing or dummy Upstash config")
             return None
         try:
             from upstash_redis import Redis
