@@ -2,6 +2,12 @@
 
 Build a production-grade Enterprise RAG system for Kubernetes IT operations using LangGraph, FastAPI, Qdrant, PostgreSQL, Redis caching, and advanced retrieval patterns. This repository evolves from a baseline RAG into a highly advanced system featuring Hybrid Search, ReRanking, HyDE, CRAG, Self-RAG, Text2SQL with human approval, comprehensive evaluation, and a 9-layer guardrails pipeline.
 
+## 📸 Screenshots
+
+| Chat Interface | System Status | Query History |
+|:---:|:---:|:---:|
+| <img src="assets/chat-interface.png" width="400"/> | <img src="assets/system-status.png" width="400"/> | <img src="assets/query-history.png" width="400"/> |
+
 ## 🚀 Features & Architecture
 
 ```mermaid

@@ -108,6 +108,7 @@ def _generate(
     iterations = 0
     last_score: float | None = None
     final_refined: str | None = None
+    enable_self_reflective = bool(_flag(flags, "enable_self_reflective", False))
     if enable_self_reflective:
         while True:
             reflection = reflect_on_answer(
